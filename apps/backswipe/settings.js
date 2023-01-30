@@ -4,7 +4,8 @@
   // Apps is an array of app info objects, where all the apps that are there are either blocked or allowed, depending on the mode
   var DEFAULTS = {
     'mode': 0,
-    'apps': []
+    'apps': [],
+    'smart': true,
   };
   
   var settings = {};
@@ -55,6 +56,14 @@
       },
       'App List': () => {
         showAppSubMenu();
+      },
+      'Smart Detection': {
+        value: settings.smart,
+        format: v => v ? "On" : "Off",
+        onchange: v => {
+          settings.smart = v;
+          saveSettings(settings);
+        }
       }
     };
     

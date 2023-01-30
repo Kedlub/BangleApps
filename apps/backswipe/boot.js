@@ -2,8 +2,13 @@
   var DEFAULTS = {
     mode: 0,
     apps: [],
+    smart: true,
   };
   var settings = require("Storage").readJSON("backswipe.json", 1) || DEFAULTS;
+  // If settings are from older version, compare them to the defaults and update
+  if (settings.smart === undefined) {
+    settings.smart = DEFAULTS.smart;
+  }
 
   // Overrride the default setUI method, so we can save the back button callback
   var setUI = Bangle.setUI;
@@ -14,6 +19,15 @@
     }
 
     var currentFile = global.__FILE__ || "";
+
+    // If current app is a "keyboard", then disable backswipe
+    var appName = currentFile.split(".")[0];
+    var appInfo = require("Storage").readJSON(appName + ".info", 1);
+    if (appInfo && appInfo.type === "keyboard") {
+      if (global.BACK) delete global.BACK;
+      setUI(mode, cb);
+      return;
+    }
 
     if(global.BACK) delete global.BACK;
     if (options && options.back && enabledForApp(currentFile)) {
@@ -36,6 +50,8 @@
   // app is the src file of the app
   function enabledForApp(app) {
     if (!settings) return true;
+    if (settings.smart && (Bangle["#onswipe"] instanceof Array)&&Bangle["#onswipe"].length>1)
+      return false; // if we have other swipe handlers, don't do anything
     if (settings.mode === 0) {
       return !(settings.apps.filter((a) => a.src === app).length > 0);
     } else if (settings.mode === 1) {
